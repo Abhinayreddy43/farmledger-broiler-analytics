@@ -1,0 +1,285 @@
+{
+  "name": "FarmLedger - Weather loader",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT TO_CHAR(MIN(housed_date), 'YYYY-MM-DD') AS start_date,\n       TO_CHAR(MAX(liquid_date), 'YYYY-MM-DD') AS end_date\nFROM farmledger.dim_batch;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        224,
+        0
+      ],
+      "id": "a57c64a3-753e-49f7-889b-4d4f2cf27b6b",
+      "name": "Get date range",
+      "credentials": {
+        "postgres": {
+          "id": "YSjSXuME7JcqwxgY",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "8b9693c0-d47f-4c6a-b1e3-a1a8a0454683",
+      "name": "Execute  the workflow"
+    },
+    {
+      "parameters": {
+        "url": "=https://archive-api.open-meteo.com/v1/archive?latitude=16.48&longitude=78.21&start_date={{ $json.start_date }}&end_date={{ $json.end_date }}&daily=temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,relative_humidity_2m_mean&timezone=Asia/Kolkata",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 FarmLedger-student-project"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        0
+      ],
+      "id": "47865eb0-0664-4c99-97c8-0edf48271a83",
+      "name": "Ask Open-Meteo"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Take the lists Open-Meteo sent and make one row per day\nconst d = $input.first().json.daily;\n\nconst rows = d.time.map((day, i) => ({\n  weather_date: day,\n  latitude: 16.48,\n  longitude: 78.21,\n  temp_max_c: d.temperature_2m_max[i],\n  temp_min_c: d.temperature_2m_min[i],\n  temp_mean_c: d.temperature_2m_mean[i],\n  humidity_mean_pct: d.relative_humidity_2m_mean[i],\n  precipitation_mm: d.precipitation_sum[i]\n}));\n\nreturn rows.map(r => ({ json: r }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "235d09dc-a03c-45fc-b942-4fd1343b6434",
+      "name": "Make one row per day"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "value": "farmledger",
+          "mode": "list",
+          "cachedResultName": "farmledger"
+        },
+        "table": {
+          "__rl": true,
+          "value": "fact_weather_day",
+          "mode": "list",
+          "cachedResultName": "fact_weather_day"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "latitude": 0,
+            "longitude": 0,
+            "temp_max_c": 0,
+            "temp_min_c": 0,
+            "temp_mean_c": 0,
+            "humidity_mean_pct": 0,
+            "precipitation_mm": 0
+          },
+          "matchingColumns": [
+            "weather_date"
+          ],
+          "schema": [
+            {
+              "id": "weather_date",
+              "displayName": "weather_date",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "latitude",
+              "displayName": "latitude",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "longitude",
+              "displayName": "longitude",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "temp_max_c",
+              "displayName": "temp_max_c",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "temp_min_c",
+              "displayName": "temp_min_c",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "temp_mean_c",
+              "displayName": "temp_mean_c",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "humidity_mean_pct",
+              "displayName": "humidity_mean_pct",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "precipitation_mm",
+              "displayName": "precipitation_mm",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "source",
+              "displayName": "source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "loaded_at",
+              "displayName": "loaded_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        896,
+        0
+      ],
+      "id": "934ceaad-9437-4f97-a810-d97071b27fcc",
+      "name": "Save weather data into Postgres",
+      "credentials": {
+        "postgres": {
+          "id": "YSjSXuME7JcqwxgY",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Execute  the workflow": {
+      "main": [
+        [
+          {
+            "node": "Get date range",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get date range": {
+      "main": [
+        [
+          {
+            "node": "Ask Open-Meteo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ask Open-Meteo": {
+      "main": [
+        [
+          {
+            "node": "Make one row per day",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Make one row per day": {
+      "main": [
+        [
+          {
+            "node": "Save weather data into Postgres",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "e5e5d942-8a25-4f4e-91ab-b8f6e466415d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "87804912f5932703795d93ebcb0c5bbe136883f5d27019bbc16b0686b86575fb"
+  },
+  "nodeGroups": [],
+  "id": "W3qU9DCqWl4tcAzP",
+  "tags": []
+}
