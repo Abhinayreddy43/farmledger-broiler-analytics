@@ -48,7 +48,7 @@ Five pages, with automatic summary text that updates when batches are added. Cha
 
 ![Weather page](powerbi/screenshots/05_weather.png)
 
-A PDF export of the report is in [text](powerbi/FarmLedger_dashboard.pdf). The `.pbix` file is not published because it contains an imported copy of the data.
+A PDF export of the report is in [file](powerbi/FarmLedger_dashboard.pdf). The `.pbix` file is not published because it contains an imported copy of the data.
 
 ## Key findings
 
@@ -106,7 +106,7 @@ The workflow [`n8n/weather_loader.json`](n8n/weather_loader.json) reads the date
 ## Data and privacy
 
 - The source Excel files are not published. Bank, tax and address details from the statements were never stored.
-- `sql/load_data_02.sql` currently holds the real batch values; it was replaced by a masked sample before this repository is made public.
+- The batch figures in the SQL scripts, dashboard and screenshots are real, and are published with the farmer's permission. The farm code and area names appear in the data scripts. The personal details from the statements were never stored.
 - Farm costs (electricity, labour, rice husk, charcoal, soil) and manure income are the farmer's estimates, stored in the `farm_assumption` table. Manure is valued at ₹2,000 per tractor load.
 
 ## Limitations
